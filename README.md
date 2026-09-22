@@ -19,7 +19,7 @@ Jalankan skrip `installer` melalui terminal kamu:
 ```
 bash installer
 ```
-#### or 
+or 
 ```
 chmod +x installer && ./installer
 ```
