@@ -38,7 +38,7 @@ gs() {
 
   # Cek apakah ada perubahan file
   if [ -z "$(git status --porcelain)" ]; then
-    echo "ℹ️ Tidak ada perubahan untuk di-commit."
+    echo "ℹ️   Tidak ada perubahan untuk di-commit."
     return 0
   fi
 
