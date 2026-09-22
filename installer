@@ -54,7 +54,7 @@ gs() {
     git commit -m "$1"
   fi
 
-  echo "🔄 Mengunduh pembaruan (pull --rebase)..."
+  echo "🔄 Mengunduh pembaruan"
   git pull --rebase origin "$current_branch" || return 1
 
   echo "📤 Mengunggah perubahan (push)..."
