@@ -1,0 +1,90 @@
+#!/bin/bash
+
+# 1. Pastikan PATH mencakup lokasi binary umum
+export PATH="$PATH:/usr/bin:/bin:/usr/local/bin:$HOME/bin"
+
+# Cek keberadaan Git
+if ! command -v git &> /dev/null && ! git --version &> /dev/null; then
+  echo "❌ Git tidak ditemukan di sistem kamu."
+  echo "   Silakan install Git terlebih dahulu."
+  exit 1
+else
+  echo "✅ Git sudah terpasang di sistem."
+fi
+
+# 2. Definisi fungsi gs()
+FUNCTION_CODE='
+# Git Auto Add, Commit, Pull, Push
+gs() {
+  # Fitur Help / Panduan Penggunaan
+  if [ "$1" = "help" ] || [ "$1" = "--help" ] || [ "$1" = "-help" ] || [ "$1" = "-h" ]; then
+    echo "=========================================="
+    echo "       GS (Git Auto Sync) Help            "
+    echo "=========================================="
+    echo "Penggunaan:"
+    echo "  gs                  Auto add, auto-generate commit message, pull --rebase, & push."
+    echo "  gs \"pesan commit\"   Auto add, commit dengan pesan kustom, pull --rebase, & push."
+    echo "  gs help | --help    Menampilkan menu bantuan ini."
+    echo "=========================================="
+    return 0
+  fi
+
+  # Cek apakah berada di dalam repositori Git
+  if ! git rev-parse --is-inside-work-tree &> /dev/null; then
+    echo "❌ Error: Ini bukan direktori Git."
+    echo "❌ ketik gs help"
+    return 1
+  fi
+
+  # Cek apakah ada perubahan file
+  if [ -z "$(git status --porcelain)" ]; then
+    echo "ℹ️ Tidak ada perubahan untuk di-commit."
+    return 0
+  fi
+
+  local current_branch=$(git branch --show-current)
+  echo "🚀 Memproses di branch [$current_branch]..."
+
+  git add . || return 1
+
+  if [ -z "$1" ]; then
+    local status_msg=$(git status -s | tr '\''\n'\'' '\'' '\'' | xargs)
+    git commit -m "${status_msg:-Auto commit: $(date '\''+%Y-%m-%d %H:%M:%S'\'')}"
+  else
+    git commit -m "$1"
+  fi
+
+  echo "🔄 Mengunduh pembaruan (pull --rebase)..."
+  git pull --rebase origin "$current_branch" || return 1
+
+  echo "📤 Mengunggah perubahan (push)..."
+  git push origin "$current_branch" && echo "✅ Berhasil sync ke remote!"
+}'
+
+# 3. Tentukan file RC
+TARGET_RC=""
+if [ -n "$ZSH_VERSION" ] || [ -f "$HOME/.zshrc" ]; then
+  TARGET_RC="$HOME/.zshrc"
+elif [ -n "$BASH_VERSION" ] || [ -f "$HOME/.bashrc" ]; then
+  TARGET_RC="$HOME/.bashrc"
+else
+  echo "❌ Tidak dapat menemukan file .bashrc atau .zshrc"
+  exit 1
+fi
+
+DISPLAY_RC="${TARGET_RC/#$HOME/\~}"
+
+# 4. Hapus gs() lama jika ada, lalu perbarui
+if grep -q "gs()" "$TARGET_RC"; then
+  echo "🗑️  Menghapus versi lama... $DISPLAY_RC"
+  TMP_FILE=$(mktemp)
+  sed '/# Git Auto Add, Commit, Pull, Push/,/^[[:space:]]*}/d; /gs()/,/^[[:space:]]*}/d' "$TARGET_RC" > "$TMP_FILE"
+  mv "$TMP_FILE" "$TARGET_RC"
+fi
+
+# Masukkan fungsi baru
+echo "$FUNCTION_CODE" >> "$TARGET_RC"
+
+echo "✅ Berhasil menginstall ke $DISPLAY_RC"
+echo "🔄 Jalankan perintah ini untuk memperbarui shell:"
+echo "   source $DISPLAY_RC"
