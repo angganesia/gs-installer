@@ -16,9 +16,10 @@
 
 Jalankan skrip `installer` melalui terminal kamu:
 
-```bash
+```
 bash installer
-# or 
-chmod +x installer
-./installer
+```
+#### or 
+```
+chmod +x installer && ./installer
 ```
